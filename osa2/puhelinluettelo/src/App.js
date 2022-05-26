@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from 'axios';
 
 const FilterForm = ({ handler }) => {
   return (
@@ -31,20 +32,24 @@ const Persons = (props) => {
     .filter((person) =>
       person["name"].toLowerCase().includes(props.filterPhrase.toLowerCase())
     )
-    .map((person) => (
-      <p>
+    .map((person,ix) => (
+      <p key={ix}>
         {person.name}, {person.number}
       </p>
     ));
 };
 
 const App = () => {
-  const [persons, setPersons] = useState([
-    { name: "Arto Hellas", number: "09123456" },
-  ]);
+  const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
   const [filterPhrase, setFilterPhrase] = useState("");
+
+  useEffect(()=>{
+    axios.get('http://localhost:3001/persons').then(response => {
+      setPersons(response.data);
+    })
+  },[])
 
   const savePerson = (event) => {
     event.preventDefault();
