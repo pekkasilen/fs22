@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import axios from 'axios';
+import axios from "axios";
+import contactService from "./services/contacts";
 
 const FilterForm = ({ handler }) => {
   return (
@@ -32,9 +33,12 @@ const Persons = (props) => {
     .filter((person) =>
       person["name"].toLowerCase().includes(props.filterPhrase.toLowerCase())
     )
-    .map((person,ix) => (
-      <p key={ix}>
-        {person.name}, {person.number}
+    .map((person) => (
+      <p key={person.id}>
+        {person.name}, {person.number}{" "}
+        <button onClick={() => props.handleDelete({ person })} key={person.id}>
+          delete
+        </button>
       </p>
     ));
 };
@@ -45,22 +49,45 @@ const App = () => {
   const [newNumber, setNewNumber] = useState("");
   const [filterPhrase, setFilterPhrase] = useState("");
 
-  useEffect(()=>{
-    axios.get('http://localhost:3001/persons').then(response => {
-      setPersons(response.data);
-    })
-  },[])
+  useEffect(() => {
+    contactService.getAll().then((response) => {
+      setPersons(response);
+    });
+  }, []);
+
+  const handleDelete = ({ person }) => {
+    if (!window.confirm("Really want to delete this?")) return;
+    console.log(person);
+    contactService.deletePerson(person).then((resp) => {
+      setPersons(persons.filter((n) => n.id !== person.id));
+    });
+  };
 
   const savePerson = (event) => {
     event.preventDefault();
     if (persons.some((person) => person["name"] === newName)) {
-      alert(`${newName} already exists`);
+      if (
+        window.confirm(`${newName} already exists, want to replace the number?`)
+      ) {
+        const updatingPerson = persons.filter((n) => n.name === newName)[0];
+        updatingPerson.number = newNumber;
+        contactService.updateNumber(updatingPerson).then((response) => {
+          console.log("updated");
+          setPersons(
+            persons.map((person) =>
+              person.id !== response.id ? person : response
+            )
+          );
+        });
+      }
     } else {
       let personObject = {
         name: newName,
         number: newNumber,
       };
-      setPersons(persons.concat(personObject));
+      contactService.addNew(personObject).then((resp) => {
+        setPersons(persons.concat(resp));
+      });
     }
   };
 
@@ -90,7 +117,11 @@ const App = () => {
         savePerson={savePerson}
       />
       <h2>Numbers</h2>
-      <Persons persons={persons} filterPhrase={filterPhrase} />
+      <Persons
+        persons={persons}
+        filterPhrase={filterPhrase}
+        handleDelete={handleDelete}
+      />
     </div>
   );
 };
