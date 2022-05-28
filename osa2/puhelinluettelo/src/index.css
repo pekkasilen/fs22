@@ -1,0 +1,21 @@
+.notification {
+    border-radius: 10px;
+    font-size: 20px;
+    font-style: bold;
+    border-color: green;
+    color: green;
+    border-style: solid;
+    padding: 5px;
+    margin: 5px;
+}
+
+.error404 {
+    border-radius: 10px;
+    font-size: 20px;
+    font-style: bold;
+    border-color: red;
+    color: red;
+    border-style: solid;
+    padding: 5px;
+    margin: 5px;
+}

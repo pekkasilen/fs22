@@ -1,6 +1,20 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import contactService from "./services/contacts";
+import "./index.css";
+
+const Notification = ({ message }) => {
+  if (message === null) return;
+  return (
+    <div>
+      {message.includes("404") ? (
+        <p className="error404">{message}</p>
+      ) : (
+        <p className="notification">{message}</p>
+      )}
+    </div>
+  );
+};
 
 const FilterForm = ({ handler }) => {
   return (
@@ -48,6 +62,7 @@ const App = () => {
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
   const [filterPhrase, setFilterPhrase] = useState("");
+  const [notification, setNotification] = useState(null);
 
   useEffect(() => {
     contactService.getAll().then((response) => {
@@ -58,9 +73,21 @@ const App = () => {
   const handleDelete = ({ person }) => {
     if (!window.confirm("Really want to delete this?")) return;
     console.log(person);
-    contactService.deletePerson(person).then((resp) => {
-      setPersons(persons.filter((n) => n.id !== person.id));
-    });
+    contactService
+      .deletePerson(person)
+      .then((resp) => {
+        setPersons(persons.filter((n) => n.id !== person.id));
+        setNotification(`${person.name} was deleted`);
+        setTimeout(() => {
+          setNotification(null);
+        }, 3000);
+      })
+      .catch((err) => {
+        setNotification(`404: deleting ${person.name} failed`);
+        setTimeout(() => {
+          setNotification(null);
+        }, 3000);
+      });
   };
 
   const savePerson = (event) => {
@@ -78,6 +105,10 @@ const App = () => {
               person.id !== response.id ? person : response
             )
           );
+          setNotification(`${updatingPerson.name} was updated`);
+          setTimeout(() => {
+            setNotification(null);
+          }, 3000);
         });
       }
     } else {
@@ -87,6 +118,10 @@ const App = () => {
       };
       contactService.addNew(personObject).then((resp) => {
         setPersons(persons.concat(resp));
+        setNotification(`${personObject.name} was added`);
+        setTimeout(() => {
+          setNotification(null);
+        }, 3000);
       });
     }
   };
@@ -108,6 +143,7 @@ const App = () => {
 
   return (
     <div>
+      <Notification message={notification} />
       <h2>Phonebook</h2>
       <FilterForm handler={handleFilterChange} />
 
@@ -115,12 +151,14 @@ const App = () => {
         handleNameChange={handleNameChange}
         handleNumberChange={handleNumberChange}
         savePerson={savePerson}
+        setNotification={setNotification}
       />
       <h2>Numbers</h2>
       <Persons
         persons={persons}
         filterPhrase={filterPhrase}
         handleDelete={handleDelete}
+        setNotification={setNotification}
       />
     </div>
   );
